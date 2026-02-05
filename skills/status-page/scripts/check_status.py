@@ -5,7 +5,6 @@ import json
 import re
 import sys
 import time
-import tomllib
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -14,6 +13,8 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from functools import lru_cache
 from pathlib import Path
+
+import tomllib
 
 __all__ = [
     "FeedCache",
@@ -39,6 +40,7 @@ __all__ = [
 @dataclass
 class Incident:
     """Represents a status page incident."""
+
     title: str
     link: str
     status: str
@@ -93,10 +95,14 @@ class FeedCache:
         meta_path = self._meta_path(key)
 
         content_path.write_text(content)
-        meta_path.write_text(json.dumps({
-            "etag": etag,
-            "fetched_at": time.time(),
-        }))
+        meta_path.write_text(
+            json.dumps(
+                {
+                    "etag": etag,
+                    "fetched_at": time.time(),
+                }
+            )
+        )
 
     def is_fresh(self, key: str, max_age_seconds: int) -> bool:
         """Check if cached content is still fresh."""
@@ -129,6 +135,7 @@ def extract_status_from_html(html_content: str) -> str:
 
 class FeedParseError(Exception):
     """Raised when a feed cannot be parsed."""
+
     pass
 
 
@@ -136,7 +143,9 @@ class FeedParseError(Exception):
 MAX_FEED_ENTRIES = 100
 
 
-def parse_atom_feed(content: str, max_entries: int = MAX_FEED_ENTRIES) -> list[Incident]:
+def parse_atom_feed(
+    content: str, max_entries: int = MAX_FEED_ENTRIES
+) -> list[Incident]:
     """Parse an Atom feed and return a list of incidents.
 
     Raises:
@@ -163,7 +172,9 @@ def parse_atom_feed(content: str, max_entries: int = MAX_FEED_ENTRIES) -> list[I
             title=(title.text or "") if title is not None else "",
             link=(link.get("href") or "") if link is not None else "",
             published=(published.text or "") if published is not None else "",
-            status=extract_status_from_html(content_elem.text or "") if content_elem is not None else "Unknown",
+            status=extract_status_from_html(content_elem.text or "")
+            if content_elem is not None
+            else "Unknown",
         )
         incidents.append(incident)
 
@@ -195,7 +206,9 @@ def parse_rss_feed(content: str, max_entries: int = MAX_FEED_ENTRIES) -> list[In
             title=(title.text or "") if title is not None else "",
             link=(link.text or "") if link is not None else "",
             published=(pub_date.text or "") if pub_date is not None else "",
-            status=extract_status_from_html(description.text or "") if description is not None else "Unknown",
+            status=extract_status_from_html(description.text or "")
+            if description is not None
+            else "Unknown",
         )
         incidents.append(incident)
 
@@ -232,6 +245,7 @@ def find_service(services: dict, query: str) -> tuple[str, dict] | None:
 
 class FeedTooLargeError(Exception):
     """Raised when a feed exceeds the maximum allowed size."""
+
     pass
 
 
@@ -239,7 +253,13 @@ class FeedTooLargeError(Exception):
 MAX_FEED_SIZE_BYTES = 1024 * 1024
 
 
-def fetch_feed(url: str, cache: FeedCache | None = None, cache_key: str | None = None, max_age_seconds: int = 60, max_size_bytes: int = MAX_FEED_SIZE_BYTES) -> str:
+def fetch_feed(
+    url: str,
+    cache: FeedCache | None = None,
+    cache_key: str | None = None,
+    max_age_seconds: int = 60,
+    max_size_bytes: int = MAX_FEED_SIZE_BYTES,
+) -> str:
     """Fetch feed content from a URL, using cache if available.
 
     Raises:
@@ -271,7 +291,9 @@ def fetch_feed(url: str, cache: FeedCache | None = None, cache_key: str | None =
             # Check Content-Length header first (if provided)
             content_length = response.headers.get("Content-Length")
             if content_length and int(content_length) > max_size_bytes:
-                raise FeedTooLargeError(f"Feed size {content_length} exceeds limit of {max_size_bytes} bytes")
+                raise FeedTooLargeError(
+                    f"Feed size {content_length} exceeds limit of {max_size_bytes} bytes"
+                )
 
             # Read with size limit
             content_bytes = response.read(max_size_bytes + 1)
@@ -364,10 +386,14 @@ def is_likely_active(incident: Incident, recent_hours: int = 4) -> bool:
     1. It was updated recently (within recent_hours), AND
     2. Its status doesn't suggest it's resolved
     """
-    return is_recent_incident(incident, recent_hours) and not is_likely_resolved(incident)
+    return is_recent_incident(incident, recent_hours) and not is_likely_resolved(
+        incident
+    )
 
 
-def format_incidents(service_name: str, incidents: list[Incident], limit: int = 5) -> str:
+def format_incidents(
+    service_name: str, incidents: list[Incident], limit: int = 5
+) -> str:
     """Format incidents for human-readable output."""
     lines = [f"# {service_name} Status", ""]
 
@@ -390,6 +416,15 @@ def format_incidents(service_name: str, incidents: list[Incident], limit: int = 
         lines.append("")
     else:
         lines.append("No active incidents.")
+        # Show when the last incident was
+        if incidents:
+            last_incident = incidents[0]
+            last_time = parse_timestamp(last_incident.published)
+            if last_time:
+                utc_str = last_time.strftime("%Y-%m-%d %H:%M UTC")
+                local_time = last_time.astimezone()
+                local_str = local_time.strftime("%H:%M %Z")
+                lines.append(f"The last incident: {utc_str} ({local_str})")
         lines.append("")
         lines.append("## Recent History")
         lines.append("")
@@ -436,7 +471,9 @@ def main():
     feed_type = service.get("feed_type", "atom")
 
     try:
-        content = fetch_feed(feed_url, cache=cache, cache_key=service_key, max_age_seconds=60)
+        content = fetch_feed(
+            feed_url, cache=cache, cache_key=service_key, max_age_seconds=60
+        )
     except urllib.error.URLError as e:
         print(f"Error fetching {service['name']} status: {e}")
         sys.exit(1)
