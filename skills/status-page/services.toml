@@ -1,0 +1,16 @@
+# Status page configuration for common services
+# Add new services here following the pattern below
+
+[claude]
+name = "Claude"
+status_page = "https://status.claude.com"
+feed = "https://status.claude.com/history.atom"
+feed_type = "atom"
+aliases = ["anthropic", "claude-code"]
+
+[github]
+name = "GitHub"
+status_page = "https://www.githubstatus.com"
+feed = "https://www.githubstatus.com/history.atom"
+feed_type = "atom"
+aliases = ["gh"]
