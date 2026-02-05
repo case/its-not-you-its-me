@@ -2,11 +2,11 @@
 
 Is a cloud thing erroring? Check its status page from wherever you are`*`.
 
-`*` This is currently just for Claude Code, but it could easily be expanded to work with other tools if you are interested in contributing. See below.
+`*` This is currently just for [Claude Code](https://code.claude.com/docs/en/overview), but it could easily be expanded to work with other tools if you are interested in contributing. See below.
 
 ## Background
 
-This is a Claude Code [skill](https://code.claude.com/docs/en/skills) that lets you type `/status-page` to see if Claude is having any active incidents. I was inspired to make it while doing some work one morning, and repeatedly seeing this:
+This is a Claude Code [skill](https://code.claude.com/docs/en/skills) that lets you type `/status-page` to see if Claude is having any active incidents. I was ~~annoyed~~ inspired to make it while doing some work one morning, and repeatedly saw this:
 
 ```
 API Error: 500 {"type":"error","error":{"type":"api_error","message":"Internal server error"},"request_id":"{a-real-hash}"}
@@ -14,13 +14,15 @@ API Error: 500 {"type":"error","error":{"type":"api_error","message":"Internal s
 
 https://status.claude.com/ showed an active incident at the time, so this would have saved a few steps.
 
+It's also fun to make stuff like this. :)
+
 ## Installation
 
 1. Clone this repo
-2. Run `make install` - it simply uses `cp` to copy the needed files to `~/.claude/skills/status-page`
+2. Run `make install` - which simply uses `cp` to copy the needed files to `~/.claude/skills/status-page`
 3. Restart Claude Code, so that it can discover the new skill
 
-If this directory already exists, installation will stop. You can run `make install-force` to write over the existing dir.
+If the `status-page` directory already exists, installation will stop. You can run `make install-force` to write over the existing dir.
 
 **Prerequisites:** `python3` must be installed and in your `PATH`, because this skill works by running the `check_status.py` script.
 
@@ -30,9 +32,29 @@ If you'd like to uninstall it for some reason, `make uninstall` is available.
 
 From within Claude Code:
 
-- `/status-page` - will show if the Claude status page has any active incidents
-- `/status-page gh` - will check to see if GitHub has any active incidents
+- `/status-page` - shows if the Claude status page has any active incidents
+- `/status-page gh` - check if GitHub has any active incidents
 
+The output looks like this:
+
+```
+❯ /status-page
+
+⏺ Bash(python3 ~/.claude/skills/status-page/scripts/check_status.py)
+  ⎿  Running…
+
+────────────────────────────────────────────────────────────────────────────────────────
+ Bash command
+
+   python3 ~/.claude/skills/status-page/scripts/check_status.py
+   Check Claude status page
+
+ Do you want to proceed?
+ ❯ 1. Yes
+ <snip>
+ 
+⏺ No active incidents on Claude. The last incident was 2026-02-04 17:06 UTC (09:06 PST).
+```
 
 ## Supported Services & status pages
 
