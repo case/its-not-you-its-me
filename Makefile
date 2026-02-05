@@ -19,7 +19,8 @@ install-force:
 	$(do_install)
 
 uninstall:
-	rm -rf $(SKILL_DIR)
+	@echo "This will remove $(SKILL_DIR)"
+	@read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] && rm -r $(SKILL_DIR)
 
 test:
 	python3 -m unittest discover -s test -v
