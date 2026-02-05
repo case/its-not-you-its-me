@@ -18,8 +18,10 @@ class MockResponse:
         self.content = content
         self.headers = headers or {}
 
-    def read(self):
-        return self.content
+    def read(self, size: int = -1):
+        if size < 0:
+            return self.content
+        return self.content[:size]
 
     def __enter__(self):
         return self

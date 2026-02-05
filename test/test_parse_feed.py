@@ -52,6 +52,9 @@ class TestParseRssFeed(unittest.TestCase):
     def test_extracts_incident_status(self):
         self.assertEqual(self.incidents[0].status, "Resolved")
 
+    def test_extracts_published_date(self):
+        self.assertIn("Wed, 04 Feb 2026", self.incidents[0].published)
+
 
 if __name__ == "__main__":
     unittest.main()

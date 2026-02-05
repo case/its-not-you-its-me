@@ -19,12 +19,16 @@ class TestMain(unittest.TestCase):
     def setUp(self):
         self.held_stdout = StringIO()
         self.held_stderr = StringIO()
+        self.temp_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
 
     @patch("check_status.fetch_feed")
     @patch("check_status.get_default_cache_dir")
     def test_main_outputs_status(self, mock_cache_dir, mock_fetch):
         # Setup mocks
-        mock_cache_dir.return_value = Path(tempfile.mkdtemp())
+        mock_cache_dir.return_value = Path(self.temp_dir.name)
         mock_fetch.return_value = (FIXTURES_DIR / "2026-02-04-history.atom").read_text()
 
         # Run main with captured stdout
@@ -39,7 +43,7 @@ class TestMain(unittest.TestCase):
     @patch("check_status.fetch_feed")
     @patch("check_status.get_default_cache_dir")
     def test_main_shows_no_active_when_resolved(self, mock_cache_dir, mock_fetch):
-        mock_cache_dir.return_value = Path(tempfile.mkdtemp())
+        mock_cache_dir.return_value = Path(self.temp_dir.name)
         mock_fetch.return_value = (FIXTURES_DIR / "2026-02-04-history.atom").read_text()
 
         with patch.object(sys, "argv", ["check_status.py", "claude"]):
@@ -59,20 +63,24 @@ class TestMain(unittest.TestCase):
         output = self.held_stdout.getvalue()
         self.assertIn("Unknown service", output)
 
-    def test_main_exits_on_no_args(self):
+    @patch("check_status.fetch_feed")
+    @patch("check_status.get_default_cache_dir")
+    def test_main_defaults_to_claude(self, mock_cache_dir, mock_fetch):
+        """When no service argument is provided, default to Claude."""
+        mock_cache_dir.return_value = Path(self.temp_dir.name)
+        mock_fetch.return_value = (FIXTURES_DIR / "2026-02-04-history.atom").read_text()
+
         with patch.object(sys, "argv", ["check_status.py"]):
             with patch.object(sys, "stdout", self.held_stdout):
-                with self.assertRaises(SystemExit) as ctx:
-                    check_status.main()
-                self.assertEqual(ctx.exception.code, 1)
+                check_status.main()
 
         output = self.held_stdout.getvalue()
-        self.assertIn("Usage:", output)
+        self.assertIn("Claude Status", output)
 
     @patch("check_status.fetch_feed")
     @patch("check_status.get_default_cache_dir")
     def test_main_handles_alias(self, mock_cache_dir, mock_fetch):
-        mock_cache_dir.return_value = Path(tempfile.mkdtemp())
+        mock_cache_dir.return_value = Path(self.temp_dir.name)
         mock_fetch.return_value = (FIXTURES_DIR / "2026-02-04-history.atom").read_text()
 
         # Use alias "anthropic" instead of "claude"
